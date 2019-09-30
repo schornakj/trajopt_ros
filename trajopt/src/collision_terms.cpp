@@ -323,7 +323,7 @@ void SingleTimestepCollisionEvaluator::CalcCollisions(const DblVec& x,
   for (const auto& link_name : adjacency_map_->getActiveLinkNames())
     contact_manager_->setCollisionObjectsTransform(link_name, state->transforms[link_name]);
 
-  contact_manager_->contactTest(contacts, tesseract_collision::ContactTestType::ALL);
+  contact_manager_->contactTest(contacts, tesseract_collision::ContactTestType::CLOSEST);
 
   tesseract_collision::ContactResultVector temp;
   tesseract_collision::flattenResults(std::move(contacts), temp);
@@ -427,7 +427,7 @@ void CastCollisionEvaluator::CalcCollisions(const DblVec& x, tesseract_collision
     contact_manager_->setCollisionObjectsTransform(
         link_name, state0->transforms[link_name], state1->transforms[link_name]);
 
-  contact_manager_->contactTest(contacts, tesseract_collision::ContactTestType::ALL);
+  contact_manager_->contactTest(contacts, tesseract_collision::ContactTestType::CLOSEST);
 
   tesseract_collision::ContactResultVector temp;
   tesseract_collision::flattenResults(std::move(contacts), temp);
