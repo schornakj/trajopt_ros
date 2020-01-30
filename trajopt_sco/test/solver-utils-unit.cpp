@@ -265,31 +265,39 @@ TEST(solver_utils, eigenToCSC_upper_triangular)  // NOLINT
 
 TEST(solver_util, exprToEigen_huge_matrix)  // NOLINT
 {
-  int n_vars = 7;
-  std::vector<VarRep::Ptr> x_info;
-  VarVector x;
-  for (std::size_t i = 0; i < static_cast<std::size_t>(n_vars); ++i)
+  std::size_t n_vars = 200;
+  std::size_t n_rows = 20000;
+  AffExprVector big_affine_vector;
+  for(std::size_t row = 0; row < n_rows; ++row)
   {
-    std::stringstream var_name;
-    var_name << "x_" << i;
-    VarRep::Ptr x_el(new VarRep(i, var_name.str(), nullptr));
-    x_info.push_back(x_el);
-    x.push_back(Var(x_el.get()));
+    std::vector<VarRep::Ptr> x_info;
+    VarVector x;
+    for (std::size_t i = static_cast<std::size_t>(0 + row); i < static_cast<std::size_t>(n_vars + row); i++)
+    {
+      std::stringstream var_name;
+      var_name << "x_" << i;
+      VarRep::Ptr x_el(new VarRep(i, var_name.str(), nullptr));
+      x_info.push_back(x_el);
+      x.push_back(Var(x_el.get()));
+//      VarRep x_el(i, var_name.str(), nullptr);
+//      x.push_back(x_el);
+//      x.emplace_back(new Var(i, var_name.str(), nullptr));
+    }
+
+    // x_affine = [1, 2, 3, 4, 5, 6, 7]*x + 1
+    AffExpr x_affine;
+    x_affine.vars = x;
+    x_affine.coeffs = DblVec(200, 2.0);
+    x_affine.constant = 1;
+
+    big_affine_vector.push_back(x_affine);
   }
-
-  // x_affine = [1, 2, 3, 4, 5, 6, 7]*x + 1
-  AffExpr x_affine;
-  x_affine.vars = x;
-  x_affine.coeffs = DblVec{ 1, 2, 3, 4, 5, 6, 7};
-  x_affine.constant = 1;
-
-  AffExprVector big_affine_vector(20000, x_affine);
 
   Eigen::SparseMatrix<double> m_A;
   Eigen::VectorXd v_u;
 
   auto start = std::chrono::high_resolution_clock::now();
-  exprToEigen(big_affine_vector, m_A, v_u, n_vars);
+  exprToEigen(big_affine_vector, m_A, v_u, int(n_vars));
   auto end = std::chrono::high_resolution_clock::now();
   auto elapsed = static_cast<std::chrono::duration<double>>(end - start).count();
   LOG_INFO("Duration: %s s", CSTR(elapsed));
