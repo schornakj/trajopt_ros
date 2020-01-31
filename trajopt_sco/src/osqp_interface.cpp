@@ -5,6 +5,7 @@ TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <Eigen/SparseCore>
 #include <fstream>
 #include <csignal>
+#include <chrono>
 TRAJOPT_IGNORE_WARNINGS_POP
 
 #include <trajopt_sco/osqp_interface.hpp>
@@ -32,7 +33,7 @@ OSQPModel::OSQPModel() : P_(nullptr), A_(nullptr)
   osqp_settings_.eps_rel = 1e-6;
   osqp_settings_.max_iter = 8192;
   osqp_settings_.polish = 1;
-  osqp_settings_.verbose = false;
+  osqp_settings_.verbose = true;
 }
 OSQPModel::~OSQPModel()
 {
@@ -241,11 +242,25 @@ DblVec OSQPModel::getVarValues(const VarVector& vars) const
 
 CvxOptStatus OSQPModel::optimize()
 {
+  std::cout << "Starting timed portion of optimization" << std::endl;
+  auto time_start = std::chrono::high_resolution_clock::now();
   update();
+  auto time_updated = std::chrono::high_resolution_clock::now();
   createOrUpdateSolver();
+  std::cout << "Time to update problem:       "
+            << static_cast<std::chrono::duration<double>>(time_updated - time_start).count() << " s." << std::endl;
+  auto time_updated_solver = std::chrono::high_resolution_clock::now();
+  std::cout << "Time to create/update solver: "
+            << static_cast<std::chrono::duration<double>>(time_updated_solver - time_updated).count() << " s."
+            << std::endl;
 
   // Solve Problem
   const c_int retcode = osqp_solve(osqp_workspace_);
+  auto time_solve = std::chrono::high_resolution_clock::now();
+
+  std::cout << "Time to solve (last thing):   "
+            << static_cast<std::chrono::duration<double>>(time_solve - time_updated_solver).count() << " s."
+            << std::endl;
 
   if (retcode == 0)
   {
